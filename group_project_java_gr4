@@ -1,0 +1,573 @@
+package com.example.D_A;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.*;
+import java.sql.*;
+import java.io.*;
+import java.util.Date;
+
+public class Main {
+    public static boolean can_user_log_in = false;
+    public static boolean pharmacist = false;
+    public static void main(String[] args) throws Exception{
+        log_in();
+
+        if(can_user_log_in){
+            if(pharmacist){
+                pharmacist();
+            }else{
+                deliveryman();
+            }
+        }
+    }
+
+
+    //Gets data from db
+    public static void log_in() throws Exception{
+        try{
+
+            Scanner in = new Scanner(System.in);
+
+            System.out.println("Choose position: \n" +
+                    "1. pharmacist\n" +
+                    "2. deliveryman\n");
+            System.out.print("your chose: ");
+            int user_position = in.nextInt();
+
+
+
+        Hashtable<Integer, String> position = new Hashtable<Integer, String>();
+
+        position.put(1, "pharmacist");
+        position.put(2, "deliveryman");
+
+
+
+        if (user_position == 1 || user_position == 2){
+            System.out.println("type log-in-data for " + position.get(user_position));
+            System.out.print("login: ");
+            String u_login = in.next();
+            System.out.print("password: ");
+            String u_password = in.next();
+            System.out.println();
+
+            System.out.println("processing");
+
+
+
+            try{
+                Connection con = getConnection();
+                PreparedStatement statement = con.prepareStatement("select login, password FROM pharmacy1.data_for_log_in where position = '" + position.get(user_position) + "'");
+                ResultSet result = statement.executeQuery();
+
+                String login = null, password = null;
+
+                while(result.next()){
+                    login = result.getString("login");
+                    password = result.getString("password");
+                }
+                result.close();
+
+                if (u_login.equals(login)){
+                    if (u_password.equals(password)){
+                        can_user_log_in = true;
+                        if(user_position == 1){
+                            pharmacist = true;
+                        }
+                        System.out.println();
+                        System.out.println("You entered!");
+                        System.out.println();
+                    }else{
+                        System.out.println("Sorry, entered wrong password");
+                    }
+                }else{
+                    System.out.println("Sorry, entered wrong login");
+                }
+            }catch(Exception e){System.out.println(e);}
+
+
+        }else{
+            System.out.println("choose only 1 or 2");
+        }
+
+        } catch(Exception e){System.out.println(e);}
+
+    }
+
+
+    public static void deliveryman(){
+        System.out.println("menu of deliveryman");
+    }
+
+    public static void pharmacist(){
+        Scanner input = new Scanner(System.in);
+
+        //Аптекарь
+        System.out.println("Приветствую дорогой, Аптекарь!");
+        System.out.println("Пожалуйста наберите номер меню для работы с программой, если закончили, то наберите 8: ");
+        int choice = 0;
+        do {
+            System.out.println("\n");
+            System.out.println("Меню");
+            System.out.println("1. Поиск лекарств: \n" +
+                    "2. Показать полный список лекарств\n" +
+                    "3. Изменить цену за лекарство\n" +
+                    "4. Продать лекарство\n" +
+                     "5. Показать запас лекарств:\n" +
+                    "6. Заказать лекарство:\n" +
+                    "7. Показать информацию о программе\n" +
+                    "8. Выход\n");
+            System.out.print("Выбор меню >>> ");
+            choice = input.nextInt();
+            switch (choice) {
+                case 1:
+                    System.out.println(" 1.Найти лекарство по названию \n " +
+                            "2.Найти лекарство по компании производителя \n " +
+                            "3.Найти лекарство по симптоматике");
+                    System.out.print("ваш выбор : ");
+                    int ch1 = input.nextInt();
+
+
+
+                    String query = "";
+
+                    switch(ch1){
+                        case 1:
+                            System.out.print("medicine name (lower case): ");
+                            String medicine_name = input.next();
+                            query = "select * from pharmacy1.medicines where medicine_name = '" + medicine_name + "'";
+                            break;
+                        case 2:
+                            System.out.print("manufacturer name (lower case): ");
+                            String manufacturer_name = input.next();
+                            query = "select * from pharmacy1.medicines where manufacturer = '" + manufacturer_name + "'";
+                            break;
+                        case 3:
+                            System.out.print("symptomatology name (lower case): ");
+                            String symptomatology_name = input.next();
+                            query = "select * from pharmacy1.medicines where symptomatology = '" + symptomatology_name + "'";
+                            break;
+                    }
+
+                    try{
+                        Connection con = getConnection();
+                        PreparedStatement statement = con.prepareStatement(query);
+                        ResultSet result = statement.executeQuery();
+                        int length_1 = 15;
+                        int length_2 = 0;
+                        System.out.println("name           quantity       price          indication     manufacturer   symptomatology");
+                        while(result.next()){
+                            length_2 = result.getString("medicine_name").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("medicine_name") + " ".repeat(length_1-result.getString("medicine_name").length()));
+                            length_2 = result.getString("quantity").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("quantity") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("price").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("price") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("indication").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("indication") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("manufacturer").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("manufacturer") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("symptomatology").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.println(result.getString("symptomatology") + " ".repeat(length_1-result.getString("symptomatology").length()));
+                        }
+                        result.close();
+
+                    }catch(Exception e){System.out.println(e);}
+
+                    break;
+                case 2:
+                    System.out.println("Полный список лекарств");
+                    try{
+                        Connection con = getConnection();
+                        Statement statement = con.createStatement();
+                        ResultSet result = statement.executeQuery("select * from pharmacy1.medicines");
+                        int length_1 = 15;
+                        int length_2 = 0;
+                        System.out.println("name           quantity       price          indication     manufacturer   symptomatology");
+                        while(result.next()){
+                            length_2 = result.getString("medicine_name").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("medicine_name") + " ".repeat(length_1-result.getString("medicine_name").length()));
+                            length_2 = result.getString("quantity").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("quantity") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("price").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("price") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("indication").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("indication") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("manufacturer").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.print(result.getString("manufacturer") + " ".repeat(length_1-length_2));
+                            length_2 = result.getString("symptomatology").length();
+                            length_1 = length_1<length_2 ? length_2 + 1: 15;
+                            System.out.println(result.getString("symptomatology") + " ".repeat(length_1-result.getString("symptomatology").length()));
+                        }
+                        result.close();
+
+                    }catch(Exception e){ System.out.println(e); }
+
+
+                    break;
+                case 3:
+                    System.out.print("Пожалуйта напишите имя лекарства (lower case): ");
+                    String name_m = input.next();
+                    System.out.print("Enter a new price: ");
+                    int n_price = input.nextInt();
+
+                    try{
+                        Connection con = getConnection();
+                        Statement query1 = con.createStatement();
+                        query1.executeUpdate("UPDATE `pharmacy1`.`medicines` SET `price` = " + n_price +" WHERE (`medicine_name` = '" + name_m +  "')");
+                        System.out.println("New price has been set");
+                        query1.close();
+
+                    }catch(Exception e){ System.out.println(e); }
+
+
+
+                    break;
+                case 4:
+                    boolean repeat = false;
+                    do{
+                        System.out.print(" 1.Укажите название лекарства для продажи : ");
+                        name_m = input.next();
+                        System.out.print("quantity: ");
+                        int quantity = input.nextInt();
+
+                        System.out.print("Есть ли скидка?\n" +
+                                "1. Yes\n" +
+                                "2. No\n" +
+                                ">>> ");
+                        int ch4 = input.nextInt();
+
+                        int price = 0;
+
+
+                        try{
+                            Connection con = getConnection();
+                            Statement statement = con.createStatement();
+                            ResultSet result = statement.executeQuery("select price from pharmacy1.medicines where medicine_name = '" + name_m + "' ");
+                            result.next();
+                            price = result.getInt("price");
+                            result.close();
+                        }catch(Exception e){System.out.println(e);}
+
+                        int discount = 0;
+                        if (ch4==1){
+                            System.out.print("enter an amount of discount: ");
+                            discount = input.nextInt();
+
+                            price = (int) (price * ((100 - discount)/100.0f));
+
+                        }
+
+
+
+                        try{
+
+                            Date date1 = new Date();
+                            System.out.println(date1);
+                            Date date = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(date1));
+                            System.out.println(date);
+                            Connection con = getConnection();
+                            Statement statement = con.createStatement();
+                            statement.executeUpdate("insert into pharmacy1.sailed (name, quantity, discount, date) values ('" + name_m + "', " + quantity + ", " + discount +" , '" + date +"')");
+                            ResultSet quantity_db = statement.executeQuery("select quantity from pharmacy1.medicines where medicine_name = '" + name_m +"'");
+                            quantity_db.next();
+                            int a = quantity_db.getInt("quantity") - quantity;
+                            statement.executeUpdate("UPDATE `pharmacy1`.`medicines` SET `quantity` = " + a + " WHERE (`medicine_name` = '" + name_m + "')");
+                            System.out.println();
+                            statement.executeUpdate("insert into pharmacy1.sailed (name, quantity, discount, date) values ('" + name_m + "', " + quantity + ", " + discount +" , '" + date +"')");
+
+
+
+                            System.out.println("name: " + name_m + ", quantity: " + quantity + ", discount: " + discount + ", price: " + price + ", total price: " + quantity * price);
+                            System.out.println("product sailed!");
+
+
+                            statement.close();
+                        }catch(Exception e)
+                        {
+                            if (e.equals("com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Out of range value for column 'quantity' at row 1")){
+                                System.out.println("there is nothing left in stocks");}}
+
+                        System.out.print("Do you need to sale again?\n" +
+                                "1. yes\n" +
+                                "2. no\n" +
+                                ">>> ");
+                        int r = input.nextInt();
+                        if (r == 1){
+                            repeat = true;
+                        }else{
+                            repeat = false;
+                        }
+
+                    }while(repeat);
+                    break;
+                case 5:
+                    System.out.println(" 1.Показать лекарства с наименьшим количеством \n " +
+                            "2.Показать лекарства с наибольшим количеством \n " +
+                            "3.Показать лекарства, у которого 0 лекарств \n " +
+                            "4.Показать все количество лекарств ");
+                    break;
+                case 6:
+                    System.out.println(" 1.Напишите название лекарства: \n " +
+                            "2.Напишите количество для заказа: ");
+                    break;
+                case 7:
+                    System.out.println(">>>> О программе <<<<\n" +
+                            "Программа автоматизации аптек» - (здесь название библиотеки можем дать сами)\n" +
+                            "предназначена для улучшения условий для работников аптек, поставщиков и клиентов.\n" +
+                            "Программа производит автоматические расчеты и вычисления, автоматически определяет\n" +
+                            "о нехватке того или иного лекарства в аптеке.Пользователями программы являются \n" +
+                            "поставщик и аптекарь. Для доступа в программу необходимо зайти в свой аккаунт используя\n" +
+                            "свой логин и пароль.\n" +
+                            "Эта платформа позволяет не только производит расчеты и не только нацелена помочь \n" +
+                            "работникам аптек, но и огромная помощь поставщикам. Программа показывает поставщику,\n" +
+                            "что требуется определенной аптеке и в скольких количествах, также показывает историю \n" +
+                            "доставки.\n\n" +
+                            ">>> Как работает программа для аккаунта аптекаря <<<\n" +
+                            "Вы проходите авторизацию (вводите свой пароль и логин). После успешной авторизации,\n" +
+                            "перед вами появляется соответствующее вашему аккаунту меню.\n" +
+                            "Затем выберите то, что хотите из меню. Возможны следующие действия :\n" +
+                            "Введите (1) для поиска лекарств (возможен поиск по названию,\n" +
+                            "компании производителя или по симптоматике лекарства).\n" +
+                            "Введите (2) для отображения полного списка лекарств ( программа показывает все лекарства в наличии).\n" +
+                            "Введите (3) для изменения цены за лекарство ( вводите название и новую цену медикаментов).\n" +
+                            "Введите (4) для продажи лекарства (указываете название медикамента для продажи, а так же.\n" +
+                            "указываете наличие или отсутствие скидки на этот препарат )\n" +
+                            "Введите (5) для отображения запаса лекарств (здесь вы можете узнать : о лекарствах с наименьшим.\n" +
+                            "с наибольшим или 0 количеством, а также отобразить общее количество медикаментов в наличии).\n" +
+                            "Введите (6) для заказа лекарств (чтобы совершить заказ, вам нужно написать название и количество лекарств).\n" +
+                            "Введите (7) для отображения информации о самой программе и её работы.\n" +
+                            "Введите (8) для выхода из программы, на этом этапе программа полностью завершается.\n\n");
+                    break;
+            }
+
+
+        } while (choice != 8);
+        System.out.println("Мы будем рады вашему возвращению!");
+
+    }
+
+
+    public static void post() throws  Exception{
+        final String var1 = "Victor";
+        final int var2 = 100;
+        final int var3 = 100;
+        final String var4 = "adgf";
+        final int var5 = 10;
+        try{
+            Connection con = getConnection();
+            PreparedStatement posted = con.prepareStatement("INSERT INTO medicines(medicine_name, quantity,price, indication, discount) VALUES ('"+var1+"' , "+var2+", "+var3+", '"+var4+"', "+var5+")");
+            posted.executeUpdate();
+        } catch(Exception e){System.out.println(e);}
+        finally{
+            System.out.println("Insert Completed");
+        }
+
+    }
+    public static Connection getConnection() throws Exception{
+        try{
+            String driver = "com.mysql.cj.jdbc.Driver";
+            String url = "jdbc:mysql://localhost:3306/pharmacy1";
+            String username = "root";
+            String password = "!?Gt=/Jp1yq_";
+
+            Class.forName(driver);
+
+            Connection conn = DriverManager.getConnection(url,username,password);
+            return conn;
+        } catch(Exception e){System.out.println(e);}
+
+        return null;
+    }
+}
+
+//class code{
+//    public static void coding(){
+//        Scanner input = new Scanner(System.in);
+//
+//        //Аптекарь
+//        System.out.println("Приветствую дорогой, Аптекарь!");
+//        System.out.println("Пожалуйста наберите номер меню для работы с программой, если закончили, то наберите 8: ");
+//        int choice = 0;
+//        do {
+//            System.out.println("Меню");
+//            System.out.println("1. Поиск лекарств: \n" +
+//                    "2. Показать полный список лекарств\n" +
+//                    "3. Изменить цену за лекарство\n" +
+//                    "4. Продать лекарство\n" +
+//                    "5. Показать запас лекарств:\n" +
+//                    "6. Заказать лекарство:\n" +
+//                    "7. Показать информацию о программе\n" +
+//                    "8. Выход\n");
+//            System.out.print("Выбор меню >>> ");
+//            choice = input.nextInt();
+//            switch (choice) {
+//                case 1:
+//                    System.out.println(" 1.Найти лекарство по названию \n " +
+//                            "2.Найти лекарство по компании производителя \n " +
+//                            "3.Найти лекарство по симптоматике");
+//                    System.out.print("ваш выбор :");
+//                    int ch1 = input.nextInt();
+//                    break;
+//                case 2:
+//                    System.out.println("Полный список лекарств");
+//                    break;
+//                case 3:
+//                    System.out.println(" 1.Пожалуйта напишите имя лекарства : \n " +
+//                            "2.Пожалуйста напишите новую цену для лекарства");
+//                    System.out.print("ваш выбор : ");
+//                    int ch2 = input.nextInt();
+//                    break;
+//                case 4:
+//                    System.out.println(" 1.Укажите название лекарства для продажи : \n " +
+//                            "2.Есть ли скидка ? \n " +
+//                            "3.Купить еще лекарство ?");
+//                    System.out.print("ваш выбор : ");
+//                    int ch4 = input.nextInt();
+//                    switch (ch4) {
+//                        case 1:
+//                            System.out.println(" Указание названий лекарств");
+//                            break;
+//                        case 2:
+//                            System.out.print(" д/ н : ");
+//                            String yn = input.next();
+//                            if (yn.equalsIgnoreCase("д")) {
+//                                System.out.println("Укажите процент скидки : ");
+//                            } else {
+//                                System.out.println("До свидания");
+//
+//                            }
+//                            break;
+//                        case 3:
+//                            System.out.print("д/н : ");
+//                            String yn2 = input.next();
+//                            if (yn2.equalsIgnoreCase("д")) {
+//                                System.out.println(" something");
+//                            } else {
+//                                System.out.println("Бир баля");
+//                            }
+//                            break;
+//
+//                    }
+//                    break;
+//                case 5:
+//                    System.out.println(" 1.Показать лекарства с наименьшим количеством \n " +
+//                            "2.Показать лекарства с наибольшим количеством \n " +
+//                            "3.Показать лекарства, у которого 0 лекарств \n " +
+//                            "4.Показать все количество лекарств ");
+//                    break;
+//                case 6:
+//                    System.out.println(" 1.Напишите название лекарства: \n " +
+//                            "2.Напишите количество для заказа: ");
+//                    break;
+//                case 7:
+//                    System.out.println(">>>> О программе <<<<\n" +
+//                            "Программа автоматизации аптек» - (здесь название библиотеки можем дать сами)\n" +
+//                            "предназначена для улучшения условий для работников аптек, поставщиков и клиентов.\n" +
+//                            "Программа производит автоматические расчеты и вычисления, автоматически определяет\n" +
+//                            "о нехватке того или иного лекарства в аптеке.Пользователями программы являются \n" +
+//                            "поставщик и аптекарь. Для доступа в программу необходимо зайти в свой аккаунт используя\n" +
+//                            "свой логин и пароль.\n" +
+//                            "Эта платформа позволяет не только производит расчеты и не только нацелена помочь \n" +
+//                            "работникам аптек, но и огромная помощь поставщикам. Программа показывает поставщику,\n" +
+//                            "что требуется определенной аптеке и в скольких количествах, также показывает историю \n" +
+//                            "доставки.\n\n" +
+//                            ">>> Как работает программа для аккаунта аптекаря <<<\n" +
+//                            "Вы проходите авторизацию (вводите свой пароль и логин). После успешной авторизации,\n" +
+//                            "перед вами появляется соответствующее вашему аккаунту меню.\n" +
+//                            "Затем выберите то, что хотите из меню. Возможны следующие действия :\n" +
+//                            "Введите (1) для поиска лекарств (возможен поиск по названию,\n" +
+//                            "компании производителя или по симптоматике лекарства).\n" +
+//                            "Введите (2) для отображения полного списка лекарств ( программа показывает все лекарства в наличии).\n" +
+//                            "Введите (3) для изменения цены за лекарство ( вводите название и новую цену медикаментов).\n" +
+//                            "Введите (4) для продажи лекарства (указываете название медикамента для продажи, а так же.\n" +
+//                            "указываете наличие или отсутствие скидки на этот препарат )\n" +
+//                            "Введите (5) для отображения запаса лекарств (здесь вы можете узнать : о лекарствах с наименьшим.\n" +
+//                            "с наибольшим или 0 количеством, а также отобразить общее количество медикаментов в наличии).\n" +
+//                            "Введите (6) для заказа лекарств (чтобы совершить заказ, вам нужно написать название и количество лекарств).\n" +
+//                            "Введите (7) для отображения информации о самой программе и её работы.\n" +
+//                            "Введите (8) для выхода из программы, на этом этапе программа полностью завершается.\n\n");
+//                    break;
+//            }
+//
+//
+//        } while (choice != 8);
+//        System.out.println("Мы будем рады вашему возвращению!");
+//
+////Поставщик
+//        int sChoice = 0;
+//        System.out.println("Приветствую дорогой , поставщик!");
+//        System.out.println("Пожалуйста наберите номер меню для работы с программой, если закончили, то наберите 6");
+//        do {
+//            System.out.println("Меню");
+//            System.out.println(" 1.Показать список лекарств из аптеки:\n " +
+//                    "2.Показать лекарства необходимые к доставке:\n " +
+//                    "3.Доставить лекарство:\n " +
+//                    "4.Показать доставленные лекарства:\n " +
+//                    "5.Показать информацию о программе:\n " +
+//                    "6.Выход");
+//            System.out.print("выбор меню >>> ");
+//            sChoice = input.nextInt();
+//            switch (sChoice) {
+//                case 1:
+//                    System.out.println("1");
+//                    break;
+//                case 2:
+//                    System.out.println("2");
+//                    break;
+//                case 3:
+//                    System.out.print(" 1.Пожалуйста введите название лекарств к доставке : ");
+//                    String med_name = input.next();
+//                    System.out.print(" 2.Пожалуйста напишите количество лекарств к доставке : ");
+//                    int med_quant = input.nextInt();
+//                    System.out.println();
+//                    break;
+//                case 4:
+//                    System.out.println("4");
+//                    break;
+//                case 5:
+//                    System.out.println(">>>> О программе <<<<\n" +
+//                            "Программа автоматизации аптек» - (здесь название библиотеки можем дать сами)\n" +
+//                            "предназначена для улучшения условий для работников аптек, поставщиков и клиентов.\n" +
+//                            "Программа производит автоматические расчеты и вычисления, автоматически определяет\n" +
+//                            "о нехватке того или иного лекарства в аптеке.Пользователями программы являются \n" +
+//                            "поставщик и аптекарь. Для доступа в программу необходимо зайти в свой аккаунт используя\n" +
+//                            "свой логин и пароль.\n" +
+//                            "Эта платформа позволяет не только производит расчеты и не только нацелена помочь \n" +
+//                            "работникам аптек, но и огромная помощь поставщикам. Программа показывает поставщику,\n" +
+//                            "что требуется определенной аптеке и в скольких количествах, также показывает историю \n" +
+//                            "доставки.\n\n" +
+//                            ">>> Как работает программа для аккаунта поставщика <<<\n" +
+//                            "Вы проходите авторизацию (вводите свой пароль и логин). После успешной авторизации,\n" +
+//                            "перед вами появляется соответствующее вашему аккаунту меню.\n" +
+//                            "Затем выберите то, что хотите из меню. Возможны следующие действия :\n" +
+//                            "Введите (1) для отображения списка лекарств из аптеки ():\n" +
+//                            "Введите (2) для отображения лекарств которых нет в наличие, и должны быть доставленны \n" +
+//                            "Введите (3) для доставки лекарств:\n" +
+//                            "(необходимо написать названия и количество лекарств для доставки ):\n" +
+//                            "Введите (4) для отображения  уже доставленных лекарств:\n" +
+//                            "Введите (5) для отображения информации о программе и её работе:\n" +
+//                            "Введите (6) для выхода из программы. На этом этапе программа полностью завершается\n\n");
+//                    break;
+//
+//            }
+//
+//
+//        } while (sChoice != 6);
+//        System.out.println("Мы будем рады вашему возвращению!");
+//
+//    }
+//}
